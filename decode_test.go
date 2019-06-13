@@ -9,7 +9,8 @@ import (
 	"time"
 
 	. "gopkg.in/check.v1"
-	"gopkg.in/yaml.v2"
+
+	"github.com/zoncoen/yaml"
 )
 
 var unmarshalIntTest = 123
@@ -734,6 +735,16 @@ type inlineB struct {
 type inlineC struct {
 	C int
 }
+
+type inlineInterface interface {
+	isInline()
+}
+
+type inlineD struct {
+	D int
+}
+
+func (_ *inlineD) isInline() {}
 
 func (s *S) TestUnmarshal(c *C) {
 	for i, item := range unmarshalTests {
