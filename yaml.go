@@ -358,6 +358,9 @@ func getStructInfo(sv reflect.Value) (*structInfo, error) {
 		if inline {
 			fv := sv.Field(i)
 			if field.Type.Kind() == reflect.Interface {
+				if fv.IsNil() {
+					continue
+				}
 				fv = fv.Elem()
 				if fv.Kind() == reflect.Ptr {
 					fv = fv.Elem()
