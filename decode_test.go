@@ -6,6 +6,7 @@ import (
 	"math"
 	"reflect"
 	"strings"
+	"testing"
 	"time"
 
 	. "gopkg.in/check.v1"
@@ -1343,3 +1344,26 @@ func (s *S) TestFuzzCrashers(c *C) {
 //		yaml.Marshal(&v)
 //	}
 //}
+
+func TestUnmarshalKeyOrderPreservedInterface(t *testing.T) {
+	var i yaml.KeyOrderPreservedInterface
+	str := `
+- f: 1
+  e: 2
+  d: 3
+  c:
+  - b: 4
+    a: 5
+`
+	if err := yaml.Unmarshal([]byte(str), &i); err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	b, err := yaml.Marshal(i)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if got := "\n" + string(b); got != str {
+		t.Errorf("expected:%s", str)
+		t.Errorf("got:%s", got)
+	}
+}
