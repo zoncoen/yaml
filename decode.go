@@ -232,12 +232,14 @@ type decoder struct {
 }
 
 var (
-	mapItemType    = reflect.TypeOf(MapItem{})
-	durationType   = reflect.TypeOf(time.Duration(0))
-	defaultMapType = reflect.TypeOf(map[interface{}]interface{}{})
-	ifaceType      = defaultMapType.Elem()
-	timeType       = reflect.TypeOf(time.Time{})
-	ptrTimeType    = reflect.TypeOf(&time.Time{})
+	mapSliceType                   = reflect.TypeOf(MapSlice{})
+	mapItemType                    = reflect.TypeOf(MapItem{})
+	durationType                   = reflect.TypeOf(time.Duration(0))
+	defaultMapType                 = reflect.TypeOf(map[interface{}]interface{}{})
+	ifaceType                      = defaultMapType.Elem()
+	timeType                       = reflect.TypeOf(time.Time{})
+	ptrTimeType                    = reflect.TypeOf(&time.Time{})
+	keyOrderPreservedInterfaceType = reflect.TypeOf((*KeyOrderPreservedInterface)(nil)).Elem()
 )
 
 func newDecoder(strict bool) *decoder {
@@ -552,9 +554,14 @@ func (d *decoder) sequence(n *node, out reflect.Value) (good bool) {
 			failf("invalid array: want %d elements but got %d", out.Len(), l)
 		}
 	case reflect.Interface:
-		// No type hints. Will have to use a generic sequence.
-		iface = out
-		out = settableValueOf(make([]interface{}, l))
+		if out.Type() == keyOrderPreservedInterfaceType {
+			iface = out
+			out = settableValueOf(make([]KeyOrderPreservedInterface, l))
+		} else {
+			// No type hints. Will have to use a generic sequence.
+			iface = out
+			out = settableValueOf(make([]interface{}, l))
+		}
 	default:
 		d.terror(n, yaml_SEQ_TAG, out)
 		return false
@@ -587,6 +594,14 @@ func (d *decoder) mapping(n *node, out reflect.Value) (good bool) {
 	case reflect.Map:
 		// okay
 	case reflect.Interface:
+		if out.Type() == keyOrderPreservedInterfaceType {
+			slicev := reflect.New(mapSliceType).Elem()
+			if !d.mappingSlice(n, slicev) {
+				return false
+			}
+			out.Set(slicev)
+			return true
+		}
 		if d.mapType.Kind() == reflect.Map {
 			iface := out
 			out = reflect.MakeMap(d.mapType)

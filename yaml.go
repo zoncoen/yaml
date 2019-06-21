@@ -15,6 +15,10 @@ import (
 	"sync"
 )
 
+// KeyOrderPreservedInterface decodes same as the interface{}.
+// However, the order of keys is preserved when encoding and decoding.
+type KeyOrderPreservedInterface interface{}
+
 // MapSlice encodes and decodes as a YAML map.
 // The order of keys is preserved when encoding and decoding.
 type MapSlice []MapItem
